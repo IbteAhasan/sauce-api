@@ -55,6 +55,7 @@ router.get("/anime-info/:id", async (req, res) => {
     const animeInfo = {
       title: $("div.anime_info_body").find("h1").text(),
       type: $("div.anime_info_body").find("p:nth-of-type(2)>a").attr("title"),
+      img: $("div.anime_info_body_bg").find("img").attr("src"),
       desc: $("div.anime_info_body")
         .find("p:nth-of-type(3)")
         .text()
@@ -64,15 +65,25 @@ router.get("/anime-info/:id", async (req, res) => {
       ),
       status: $("div.anime_info_body").find("p:nth-of-type(6)>a").text(),
     };
+    //genre
+    const genre = [];
+    $("div.anime_info_body")
+      .find("p:nth-of-type(4)>a")
+      .each((i, element) => {
+        genre.push($(element).attr("title"));
+      });
+    animeInfo.genre = genre;
     //Episode info
     const episodeStart = $("div.anime_video_body>ul>li")
       .find("a")
       .attr("ep_start");
-    const episodeEnd = $("div.anime_video_body>ul>li:last-of-type").find("a").attr("ep_end");
+    const episodeEnd = $("div.anime_video_body>ul>li:last-of-type")
+      .find("a")
+      .attr("ep_end");
     const movieId = $("div.anime_info_episodes")
       .find("input#movie_id")
       .attr("value");
-
+      animeInfo.totalEpisodes=parseInt(episodeEnd)
     response = await axios.get(
       `${ajax_url}/load-list-episode?ep_start=${episodeStart}&ep_end=${episodeEnd}&id=${movieId}&default_ep=0&alias=${req.params.id}`
     );
