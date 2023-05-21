@@ -83,7 +83,7 @@ router.get("/anime-info/:id", async (req, res) => {
     const movieId = $("div.anime_info_episodes")
       .find("input#movie_id")
       .attr("value");
-      animeInfo.totalEpisodes=parseInt(episodeEnd)
+    animeInfo.totalEpisodes = parseInt(episodeEnd)
     response = await axios.get(
       `${ajax_url}/load-list-episode?ep_start=${episodeStart}&ep_end=${episodeEnd}&id=${movieId}&default_ep=0&alias=${req.params.id}`
     );
@@ -105,6 +105,43 @@ router.get("/anime-info/:id", async (req, res) => {
     res.status(200).json(animeInfo);
   } catch (error) {
     res.status(500).json({ msg: "err", err: error });
+  }
+});
+//Popular animes
+router.get("/popular", async (req, res) => {
+  try {
+    const pageNo = parseInt(req.query.page);
+
+    const response = await axios.get(
+      `${base_url}/popular.html?page=${pageNo ? pageNo : 1}`
+    );
+    const $ = cheerio.load(response.data);
+    const popular = [];
+    $("div.last_episodes > ul > li").each((i, element) => {
+      popular.push({
+        id: $(element)
+          .find("p > a")
+          .attr("href")
+          .split("/")[2]
+          .split("-episode")[0],
+        title: $(element).find("p.name>a").text(),
+        released: parseInt($(element).find("p.released").text().replace(/[^0-9]/g, ''))
+        ,
+        imgUrl: $(element).find("img").attr("src"),
+        episodeUrl: base_url + $(element).find("a").attr("href"),
+      });
+    });
+    const hasNext = !$("ul.pagination-list>li:last-child").hasClass("selected");
+    res.status(200).json({
+      page: pageNo ? pageNo : 1,
+      hasNextPage: hasNext,
+      results: popular,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      msg: "internal error!",
+    });
   }
 });
 module.exports = router;
